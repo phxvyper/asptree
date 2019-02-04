@@ -48,15 +48,16 @@ namespace AspTree
         
         static void Main(string[] args)
         {
-            var folderPath = "";
-            var filePath = "";
-            if (args.Length < 2)
+            string folderPath = string.Empty;
+            string filePath = null;
+            if (args.Length < 1)
             {
                 Console.Write("Path to folder to search: ");
                 folderPath = Console.ReadLine();
-
-                Console.Write("Relative path to file to find dependencies and dependents of: ");
-                filePath = Console.ReadLine();
+            }
+            else if (args.Length < 2)
+            {
+                folderPath = args[0];
             }
             else
             {
@@ -151,21 +152,34 @@ namespace AspTree
             var sb = new StringBuilder();
             sb.AppendLine("digraph asptree {");
 
-            if (_files.TryGetValue(Path.Combine(rootUri.AbsolutePath, filePath), out var rootFile))
+            if (filePath != null)
             {
-                /*
-                 * get dependency all files that depend on this file
-                 */
-                foreach (var dependency in rootFile.Dependencies) {
-                    sb.AppendLine($"    \"{rootFile.FilePath}\" -> \"{dependency.FilePath}\";");
-                }
-
-                /*
-                 * get dependent graph of this file
-                 */
-                foreach (var dependent in _files.Where(kvp => kvp.Value.Dependencies.Contains(rootFile)))
+                if (_files.TryGetValue(Path.Combine(rootUri.AbsolutePath, filePath), out var rootFile))
                 {
-                    sb.AppendLine($"    \"{dependent.Value.FilePath}\" -> \"{rootFile.FilePath}\";");
+                    /*
+                    * get dependency all files that depend on this file
+                    */
+                    foreach (var dependency in rootFile.Dependencies) {
+                        sb.AppendLine($"    \"{rootFile.FilePath}\" -> \"{dependency.FilePath}\";");
+                    }
+
+                    /*
+                    * get dependent graph of this file
+                    */
+                    foreach (var dependent in _files.Where(kvp => kvp.Value.Dependencies.Contains(rootFile)))
+                    {
+                        sb.AppendLine($"    \"{dependent.Value.FilePath}\" -> \"{rootFile.FilePath}\";");
+                    }
+                }
+            }
+            else
+            {
+                foreach (var kvp in _files)
+                {
+                    foreach (var dependency in kvp.Value.Dependencies)
+                    {
+                        sb.AppendLine($"    \"{kvp.Value.FilePath}\" -> \"{dependency.FilePath}\";");
+                    }
                 }
             }
             
